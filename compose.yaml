@@ -1,0 +1,36 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      WORKSPACE_HTTPS: "1"
+      WORKSPACE_ZONE: ${WORKSPACE_ZONE:-Asia/Shanghai}
+      WORKSPACE_USER_BYTES: ${WORKSPACE_USER_BYTES:-134217728}
+      WORKSPACE_TOTAL_BYTES: ${WORKSPACE_TOTAL_BYTES:-1073741824}
+      WORKSPACE_FILE_BYTES: ${WORKSPACE_FILE_BYTES:-16777216}
+    volumes:
+      - workspace:/var/lib/firstmove
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      FIRSTMOVE_DOMAIN: ${FIRSTMOVE_DOMAIN:?Set FIRSTMOVE_DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+volumes:
+  workspace:
+  caddy_data:
+  caddy_config:

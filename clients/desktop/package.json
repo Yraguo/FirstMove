@@ -1,0 +1,44 @@
+{
+  "name": "firstmove",
+  "productName": "先行",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FirstMove self-hosted workspace client",
+  "author": "Yraguo",
+  "main": "main.cjs",
+  "build": {
+    "appId": "io.github.yraguo.firstmove",
+    "productName": "先行",
+    "artifactName": "FirstMove-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "../../dist/desktop"
+    },
+    "files": [
+      "main.cjs",
+      "connect.html",
+      "connect.js",
+      "icon.png"
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity",
+      "icon": "icon.png",
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png",
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "devDependencies": {
+    "electron": "45.4.1",
+    "electron-builder": "26.18.0"
+  }
+}

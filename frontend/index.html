@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#FCF9F7" />
+  <title>先行</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/src/brand/xianxing-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/src/brand/xianxing-180.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/app.css" />
+</head>
+<body>
+  <div id="app" class="app-boot">
+    <div class="boot-skeleton" aria-busy="true" aria-label="正在加载先行">
+      <div class="skeleton-bar skeleton-bar--short"></div>
+      <div class="skeleton-bar"></div>
+      <div class="skeleton-bar"></div>
+      <div class="skeleton-bar skeleton-bar--mid"></div>
+    </div>
+  </div>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+  <div id="drawer-root"></div>
+  <div id="dialog-root"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

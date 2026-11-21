@@ -1,0 +1,30 @@
+name: Check server deployment
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    env:
+      FIRSTMOVE_DOMAIN: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run backend integration tests
+        working-directory: backend
+        run: |
+          python -m pip install -r requirements-test.txt
+          python -m unittest discover -s tests -v
+      - name: Start the deployment stack
+        run: docker compose up -d --build --wait
+      - name: Check the homepage and API over local TLS
+        run: |
+          curl --fail --silent --show-error --insecure --retry 6 --retry-all-errors https://localhost/api/health | python -c "import json,sys; assert json.load(sys.stdin)['ok']"
+          curl --fail --silent --show-error --insecure https://localhost/ | grep -F '<title>先行</title>'
+      - if: failure()
+        run: docker compose logs --tail=100
