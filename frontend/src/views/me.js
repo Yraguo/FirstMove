@@ -11,6 +11,7 @@ import {
   syncNow
 } from "../store.js";
 import { esc, formatBytes, openConfirmDialog, showToast } from "../utils.js";
+import { copyText, isNativeApp } from "../native.js";
 
 export function renderMe(container) {
   const u = state.user;
@@ -19,13 +20,15 @@ export function renderMe(container) {
   const meterClass = pct >= 90 ? "meter-fill--danger" : pct >= 75 ? "meter-fill--warn" : "";
   const localBytes = state.localFiles.reduce((sum, f) => sum + (f.size || 0), 0);
   const notifState =
-    typeof Notification === "undefined"
-      ? "当前浏览器不支持桌面通知"
-      : Notification.permission === "granted"
-        ? "已允许浏览器通知"
-        : Notification.permission === "denied"
-          ? "浏览器通知已被拒绝，请在站点设置中开启"
-          : "尚未授权浏览器通知";
+    isNativeApp
+      ? "应用内提醒已开启，应用运行时送达"
+      : typeof Notification === "undefined"
+        ? "当前浏览器不支持桌面通知"
+        : Notification.permission === "granted"
+          ? "已允许浏览器通知"
+          : Notification.permission === "denied"
+            ? "浏览器通知已被拒绝，请在站点设置中开启"
+            : "尚未授权浏览器通知";
 
   container.innerHTML = `
     <div class="page-header">
@@ -94,7 +97,7 @@ export function renderMe(container) {
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button type="submit" class="btn btn--primary">保存提醒设置</button>
             ${
-              typeof Notification !== "undefined" && Notification.permission !== "granted"
+              !isNativeApp && typeof Notification !== "undefined" && Notification.permission !== "granted"
                 ? `<button type="button" class="btn" id="btn-req-notif">${icons.bell}<span>开启浏览器通知权限</span></button>`
                 : ""
             }
@@ -198,8 +201,8 @@ export function renderMe(container) {
           </div>
         `;
         container.querySelector("#copy-ws-inv").addEventListener("click", () => {
-          navigator.clipboard?.writeText(url);
-          showToast("工作台邀请链接已复制");
+          const ok = copyText(url);
+          showToast(ok ? "工作台邀请链接已复制" : "复制失败，请长按链接手动复制", ok ? undefined : "error");
         });
       } catch (err) {
         showToast(err.message, "error");

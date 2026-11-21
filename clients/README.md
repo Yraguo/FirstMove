@@ -1,6 +1,6 @@
 # FirstMove 客户端构建
 
-安装包连接使用者自己填写的 HTTPS 域名。网页、API 和用户资料都来自该域名。Android 使用浏览器 Custom Tabs，桌面端使用 Electron 独立窗口。地址配置界面与图标随客户端安装。
+安装包连接使用者自己填写的 HTTPS 地址，网页、API 和用户资料都来自这个地址。Android 是内嵌 WebView 的应用外壳，打开应用后不再跳出系统浏览器；桌面端是 Electron 独立窗口。地址配置界面与图标随客户端安装。
 
 ## Android
 
@@ -19,7 +19,18 @@ bash clients/android/build.sh
 unset FIRSTMOVE_STORE_PASS
 ```
 
-输出为 `dist/FirstMove-0.1.0-android.apk`。构建会执行 APK 签名验证。应用 ID 为 `io.github.yraguo.firstmove`，最低 Android 7.0。首版发布证书的 SHA-256 指纹为 `ae1b2eef27625cdb4020e61af962b704429719bc1dd2a9a3bd1a1fb98c795206`。
+输出为 `dist/FirstMove-0.2.0-android.apk`。构建会执行 APK 签名验证。应用 ID 为 `io.github.yraguo.firstmove`，最低 Android 7.0，当前 versionCode 为 2。首版发布证书的 SHA-256 指纹为 `ae1b2eef27625cdb4020e61af962b704429719bc1dd2a9a3bd1a1fb98c795206`。
+
+应用内是 WebView 外壳，不调用系统浏览器：同源页面在应用内打开，外站链接交给系统浏览器；返回键先回退页面，到底后退到后台；地址只保存一次。外壳通过 `window.FirstMove` 向页面提供三个能力，网页版与桌面端没有这个对象，相关分支会自动跳过：
+
+| 能力 | 页面调用处 | 说明 |
+| --- | --- | --- |
+| 保存附件到系统「下载」 | `frontend/src/native.js` 的 `saveBlobToDevice` | 分块 Base64 传字节，Android 10 及以上走 MediaStore，9 及以下需存储权限 |
+| 系统通知 | `native.js` 的 `nativeNotify` | 提醒只在应用运行时送达；锁屏与后台推送仍未实现 |
+| 复制链接 | `native.js` 的 `copyText` | 走系统剪贴板；其余环境退回 `execCommand` |
+| 文件选择 | 标准 `<input type="file">` | 由 `onShowFileChooser` 承接，附件上传可用 |
+
+应用内地址只保存一次，连不上时出现「重试」和「更换服务器地址」两个按钮，是换服务器的唯一入口。首次进入页面会申请通知权限。
 
 ## 桌面端
 

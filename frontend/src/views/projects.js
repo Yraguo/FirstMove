@@ -1,6 +1,7 @@
 import { api } from "../api.js";
 import { icons } from "../icons.js";
 import { offlineDB } from "../offline.js";
+import { copyText, saveBlobToDevice } from "../native.js";
 import {
   getMergedRecords,
   refreshLocalIndexes,
@@ -534,8 +535,8 @@ async function renderProjectTeam(slot, p, isLead) {
             </div>
           `;
           slot.querySelector("#copy-proj-inv").addEventListener("click", () => {
-            navigator.clipboard?.writeText(url);
-            showToast("邀请链接已复制（7 天内有效）");
+            const ok = copyText(url);
+            showToast(ok ? "邀请链接已复制（7 天内有效）" : "复制失败，请长按链接手动复制", ok ? undefined : "error");
           });
         } catch (err) {
           showToast(err.message, "error");
@@ -765,6 +766,12 @@ function renderProjectMaterials(slot, p, projectRecords, projectFiles) {
           if (!local) {
             await offlineDB.saveLocalFile(state.user.id, aid, name, size || blob.size, blob);
             await refreshLocalIndexes();
+          }
+          const saved = await saveBlobToDevice(name, blob);
+          if (saved !== null) {
+            showToast(saved);
+            paint();
+            return;
           }
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");

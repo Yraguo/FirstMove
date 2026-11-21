@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { isNativeApp, nativeNotify } from "./native.js";
 import { offlineDB } from "./offline.js";
 import { showToast, todayISO, uuid } from "./utils.js";
 
@@ -357,7 +358,7 @@ export function scheduleReminders() {
   for (const t of reminderTimers) clearTimeout(t);
   reminderTimers = [];
   if (!state.user || !state.user.enabled) return;
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  if (isNativeApp ? false : (typeof Notification === "undefined" || Notification.permission !== "granted")) return;
 
   const firedKey = `workbench_fired_reminders_${state.user.id}`;
   const fired = new Set(JSON.parse(localStorage.getItem(firedKey) || "[]"));
@@ -373,11 +374,16 @@ export function scheduleReminders() {
     // Only schedule reminders within next 24h in memory
     if (delay > 86400000) continue;
     const timer = setTimeout(() => {
+      const body = `${rem.title}${rem.kind === "independent" ? "（自定义提醒）" : "（即将截止）"}`;
       try {
-        new Notification("先行提醒", {
-          icon: "/src/brand/xianxing-192.png",
-          body: `${rem.title}${rem.kind === "independent" ? "（自定义提醒）" : "（即将截止）"}`
-        });
+        if (isNativeApp) {
+          nativeNotify("先行提醒", body);
+        } else {
+          new Notification("先行提醒", {
+            icon: "/src/brand/xianxing-192.png",
+            body
+          });
+        }
         fired.add(rem.id);
         localStorage.setItem(firedKey, JSON.stringify([...fired].slice(-200)));
       } catch {

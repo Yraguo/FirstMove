@@ -11,7 +11,7 @@ FirstMove is a self-hosted workspace for assignments, competitions, quick notes 
 
 ## Install a client
 
-Download the appropriate asset and verify its SHA-256 against the release checksums. On Android 7.0 or later, install the signed APK and enter your HTTPS server address. The Android client opens a browser Custom Tab, with the default browser as fallback. On an Apple silicon Mac running macOS 13 or later, open the arm64 DMG and drag 先行 into Applications. On 64-bit Windows, run the Setup executable. Desktop clients open their own window and can switch servers from the 先行 menu. The initial desktop release has no Apple notarization or Windows publisher certificate.
+Download the appropriate asset and verify its SHA-256 against the release checksums. On Android 7.0 or later, install the signed APK and enter your HTTPS server address. The Android client embeds the workspace in its own WebView window instead of handing off to the system browser. On an Apple silicon Mac running macOS 13 or later, open the arm64 DMG and drag 先行 into Applications. On 64-bit Windows, run the Setup executable. Desktop clients open their own window and can switch servers from the 先行 menu. The initial desktop release has no Apple notarization or Windows publisher certificate.
 
 ## Run locally
 

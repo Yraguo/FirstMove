@@ -1,6 +1,7 @@
 import { api } from "../api.js";
 import { icons } from "../icons.js";
 import { offlineDB } from "../offline.js";
+import { saveBlobToDevice } from "../native.js";
 import {
   createTaskOfflineAware,
   getMergedTasks,
@@ -796,6 +797,11 @@ export async function openTaskDrawer(task) {
         if (!local) {
           await offlineDB.saveLocalFile(state.user.id, aid, name, size || blob.size, blob);
           await refreshLocalIndexes();
+        }
+        const saved = await saveBlobToDevice(name, blob);
+        if (saved !== null) {
+          showToast(saved);
+          return;
         }
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");

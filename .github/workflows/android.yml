@@ -1,0 +1,69 @@
+name: Build Android APK
+
+# 在 GitHub 网页上点 Run workflow 即可出安装包，不需要本地 Android SDK。
+# 需要先配置两个仓库 Secret：
+#   FIRSTMOVE_KEYSTORE_B64  —— 签名密钥库的 base64（base64 -i firstmove.p12 | pbcopy）
+#   FIRSTMOVE_STORE_PASS    —— 密钥库口令
+# 必须沿用 0.1.0 那次发布用的同一把密钥，否则装不上旧版本，只能卸载重装。
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 这次构建的备注（只写进构建记录）
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install platform and build tools
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0" > /dev/null
+
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.FIRSTMOVE_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "缺少 FIRSTMOVE_KEYSTORE_B64 secret" >&2
+            exit 1
+          fi
+          mkdir -p .release-private
+          printf '%s' "$KEYSTORE_B64" | base64 -d > .release-private/firstmove.p12
+
+      - name: Build and sign APK
+        env:
+          FIRSTMOVE_KEYSTORE: ${{ github.workspace }}/.release-private/firstmove.p12
+          FIRSTMOVE_STORE_PASS: ${{ secrets.FIRSTMOVE_STORE_PASS }}
+        run: |
+          sdk="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          export ANDROID_PLATFORM="$sdk/platforms/android-35"
+          export ANDROID_TOOLS="$sdk/build-tools/35.0.0"
+          bash clients/android/build.sh
+
+      - name: Show signature fingerprint
+        run: |
+          sdk="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          "$sdk/build-tools/35.0.0/apksigner" verify --print-certs dist/FirstMove-*-android.apk | head -10 || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FirstMove-android-${{ github.run_number }}
+          path: dist/FirstMove-*-android.apk
+          if-no-files-found: error
+          retention-days: 14
