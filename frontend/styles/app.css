@@ -30,6 +30,7 @@
 .search-clear {right:8px;background:none;border:0}
 .search-input {height:36px;width:100%;border:0;border-radius:10px;background:var(--bg-subtle);padding:0 34px;font-size:14px}
 .status-pill {display:inline-flex;align-items:center;gap:7px;background:none;border:0;color:var(--ink-secondary);font-size:12px;white-space:nowrap}
+.topbar-meta {display:flex;align-items:center;flex:none}
 .status-dot {width:7px;height:7px;border-radius:50%;background:var(--success)}
 .status-pill--offline .status-dot,.status-pill--pending .status-dot {background:var(--warn)}
 .mobile-nav {display:none}
@@ -160,9 +161,11 @@
   :root {--rail-width:178px}.main {padding-inline:24px}.agenda-grid {grid-template-columns:minmax(0,1fr) 205px;gap:14px}
 }
 @media(max-width:767px) {
-  .shell,.shell--rail-right {grid-template:"top" 54px "content" 1fr / minmax(0,1fr)}
-  .rail {display:none}.mobile-logo {display:block}.topbar {padding-inline:16px}.search-input {font-size:16px}
-  .main {padding:17px 16px calc(88px + env(safe-area-inset-bottom))}.page-header {margin-bottom:16px}.page-title {font-size:31px}
+  .shell,.shell--rail-right {grid-template:"top" calc(54px + env(safe-area-inset-top)) "content" 1fr / minmax(0,1fr)}
+  .rail {display:none}.mobile-logo {display:block}
+  .topbar {padding-top:env(safe-area-inset-top);padding-inline:16px}.search-input {font-size:16px}
+  .search-box {flex:1;min-width:0}
+  .main {padding:20px 16px calc(88px + env(safe-area-inset-bottom))}.page-header {margin-bottom:16px}.page-title {font-size:31px}
   .mobile-nav {position:fixed;inset:auto 0 0;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);padding:5px 8px max(env(safe-area-inset-bottom),5px);background:rgb(252 249 247 / .96);backdrop-filter:blur(18px);border-top:1px solid var(--border-subtle)}
   .mobile-nav-btn {display:grid;justify-items:center;align-content:center;gap:2px;min-height:47px;font-size:11px;color:var(--ink-muted);border:0;background:transparent}
   .mobile-nav-btn svg {width:21px;height:21px}.mobile-nav-btn[aria-current=page] {color:var(--accent);font-weight:650}

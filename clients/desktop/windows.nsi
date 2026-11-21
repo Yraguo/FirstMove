@@ -33,7 +33,7 @@ Section
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateShortcut "$SMPROGRAMS\先行.lnk" "$INSTDIR\app\先行.exe"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayName" "先行 · FirstMove"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "0.1.0"
+  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "0.2.1"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayIcon" "$INSTDIR\app\先行.exe"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "Publisher" "Yraguo"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'

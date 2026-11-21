@@ -19,7 +19,7 @@ bash clients/android/build.sh
 unset FIRSTMOVE_STORE_PASS
 ```
 
-输出为 `dist/FirstMove-0.2.0-android.apk`。构建会执行 APK 签名验证。应用 ID 为 `io.github.yraguo.firstmove`，最低 Android 7.0，当前 versionCode 为 2。首版发布证书的 SHA-256 指纹为 `ae1b2eef27625cdb4020e61af962b704429719bc1dd2a9a3bd1a1fb98c795206`。
+输出为 `dist/FirstMove-0.2.1-android.apk`。构建会执行 APK 签名验证。应用 ID 为 `io.github.yraguo.firstmove`，最低 Android 7.0，当前 versionCode 为 3。首版发布证书的 SHA-256 指纹为 `ae1b2eef27625cdb4020e61af962b704429719bc1dd2a9a3bd1a1fb98c795206`。
 
 应用内是 WebView 外壳，不调用系统浏览器：同源页面在应用内打开，外站链接交给系统浏览器；返回键先回退页面，到底后退到后台；地址只保存一次。外壳通过 `window.FirstMove` 向页面提供三个能力，网页版与桌面端没有这个对象，相关分支会自动跳过：
 

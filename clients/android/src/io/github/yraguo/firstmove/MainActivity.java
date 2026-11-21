@@ -12,6 +12,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +24,8 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowInsets;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -69,9 +72,36 @@ public class MainActivity extends Activity {
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.rgb(252, 249, 247));
         setContentView(root);
+        applyEdgeToEdge();
         origin = getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_SERVER, "");
         if (origin.isEmpty()) showConnectScreen("");
         else openWorkspace();
+    }
+
+    // Android 15 起 targetSdk 35 强制全屏，页面会顶到状态栏和导航栏下面。
+    // 这里把系统栏高度换成内容内边距，并让状态栏图标使用深色。
+    private void applyEdgeToEdge() {
+        Window window = getWindow();
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        int flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        if (Build.VERSION.SDK_INT >= 26) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        window.getDecorView().setSystemUiVisibility(flags);
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int top;
+            int bottom;
+            if (Build.VERSION.SDK_INT >= 30) {
+                Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                Insets ime = insets.getInsets(WindowInsets.Type.ime());
+                top = bars.top;
+                bottom = Math.max(bars.bottom, ime.bottom);
+            } else {
+                top = insets.getSystemWindowInsetTop();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            view.setPadding(0, top, 0, bottom);
+            return insets;
+        });
     }
 
     // ---------- 工作台 ----------
@@ -98,7 +128,7 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " FirstMoveApp/0.2.0");
+        settings.setUserAgentString(settings.getUserAgentString() + " FirstMoveApp/0.2.1");
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
         cookies.setAcceptThirdPartyCookies(view, false);
