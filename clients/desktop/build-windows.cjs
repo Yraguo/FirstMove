@@ -17,6 +17,7 @@ async function buildWindows() {
   const plugins = await getNsisPluginsPath();
   const compiler = process.platform === "win32" ? await getMakeNsisPath() : { path: "makensis" };
   execFileSync(compiler.path, [
+    "-INPUTCHARSET", "UTF8",
     `-DAPPDIR=${path.join(unpacked, "win-unpacked")}`,
     `-DICON=${path.join(unpacked, ".icon-ico", "icon.ico")}`,
     `-DOUTPUT=${output}`,
