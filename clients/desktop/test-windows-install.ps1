@@ -23,13 +23,22 @@ function Assert-FirstMoveInstallation([string]$Directory) {
     if ($app.InstallLocation -ne $Directory -or $app.DisplayIcon -ne "$icon,0" -or $app.DisplayVersion -ne $version) {
         throw "Incorrect uninstall registration for $Directory"
     }
-    $shell = New-Object -ComObject WScript.Shell
+    $shell = New-Object -ComObject Shell.Application
     foreach ($folder in @('Programs', 'DesktopDirectory')) {
-        $link = Join-Path ([Environment]::GetFolderPath($folder)) '先行.lnk'
+        $shortcutFolder = [Environment]::GetFolderPath($folder)
+        $link = Join-Path $shortcutFolder '先行.lnk'
         if (!(Test-Path -LiteralPath $link -PathType Leaf)) { throw "Missing shortcut $link" }
-        $shortcut = $shell.CreateShortcut($link)
-        if ($shortcut.TargetPath -ne $exe -or ($shortcut.IconLocation -replace ',\s*0$', ',0') -ne "$icon,0") {
-            throw "Incorrect shortcut $link. Target: $($shortcut.TargetPath), icon: $($shortcut.IconLocation)"
+        # WScript.Shell can return an empty target when opening a Unicode .lnk name.
+        $shortcut = $shell.Namespace($shortcutFolder).ParseName('先行.lnk')
+        $target = $shortcut.GetLink.Path
+        if ($target -ne $exe) { throw "Incorrect shortcut target at $link. Target: $target" }
+        # IconLocation is a Unicode string in the .lnk and may start at either byte alignment.
+        $bytes = [IO.File]::ReadAllBytes($link)
+        $hasIcon = 0..1 | Where-Object {
+            [Text.Encoding]::Unicode.GetString($bytes, $_, $bytes.Length - $_).Contains($icon)
+        }
+        if ($null -eq $hasIcon) {
+            throw "Incorrect shortcut icon at $link. Expected: $icon"
         }
     }
     Write-Host "Verified installation and icons at $Directory"
