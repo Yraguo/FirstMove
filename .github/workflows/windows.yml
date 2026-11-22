@@ -1,0 +1,41 @@
+name: Check Windows installer
+
+on:
+  push:
+    paths:
+      - 'clients/desktop/**'
+      - '.github/workflows/windows.yml'
+  pull_request:
+    paths:
+      - 'clients/desktop/**'
+      - '.github/workflows/windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: clients/desktop/package-lock.json
+      - name: Build the Windows installer
+        working-directory: clients/desktop
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+        run: |
+          npm ci
+          npm run build:windows
+      - name: Check installation and shortcuts on two drive letters
+        run: pwsh -NoProfile -File clients/desktop/test-windows-install.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FirstMove-windows-x64
+          path: dist/FirstMove-*-windows-x64-Setup.exe
+          if-no-files-found: error

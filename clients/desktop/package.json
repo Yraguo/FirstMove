@@ -1,11 +1,14 @@
 {
   "name": "firstmove",
   "productName": "先行",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "description": "FirstMove self-hosted workspace client",
   "author": "Yraguo",
   "main": "main.cjs",
+  "scripts": {
+    "build:windows": "node build-windows.cjs"
+  },
   "build": {
     "appId": "io.github.yraguo.firstmove",
     "productName": "先行",
@@ -17,7 +20,8 @@
       "main.cjs",
       "connect.html",
       "connect.js",
-      "icon.png"
+      "icon.png",
+      "icon-win.png"
     ],
     "mac": {
       "target": "dmg",

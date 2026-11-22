@@ -5,6 +5,7 @@ const { pathToFileURL } = require("node:url");
 
 const setupFile = path.join(__dirname, "connect.html");
 const setupURL = pathToFileURL(setupFile).href;
+const isWindows = process.platform === "win32";
 let window;
 let origin = "";
 
@@ -39,7 +40,8 @@ async function openWorkspace() {
 function createWindow() {
   window = new BrowserWindow({
     title: "先行", width: 1160, height: 800, minWidth: 360, minHeight: 480,
-    icon: path.join(__dirname, "icon.png"), backgroundColor: "#fcf9f7",
+    icon: path.join(__dirname, isWindows ? "icon-win.png" : "icon.png"),
+    backgroundColor: "#fcf9f7",
     webPreferences: {nodeIntegration: false, contextIsolation: true, sandbox: true, webviewTag: false}
   });
   const contents = window.webContents;
@@ -66,6 +68,8 @@ function createWindow() {
   if (origin) void openWorkspace();
   else void connectScreen();
 }
+
+if (isWindows) app.setAppUserModelId("io.github.yraguo.firstmove");
 
 app.whenReady().then(() => {
   try { origin = workspaceOrigin(JSON.parse(fs.readFileSync(settingsFile(), "utf8")).origin); }

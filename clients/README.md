@@ -58,9 +58,10 @@ python3 clients/icons/build_icons.py
 `%LOCALAPPDATA%\Programs\Yraguo\FirstMove`，可以改到其他盘，例如
 `D:\Apps\FirstMove`，目标目录需要当前用户有写入权限。
 
-安装程序以当前用户身份运行（不弹 UAC），卸载信息同样记在当前用户下。装过一次后
-再次运行会沿用上次选择的目录。卸载前会检查目标目录里确实有 `app\先行.exe`，
-避免目录被改到别处后误删。
+安装程序以当前用户身份运行（不弹 UAC），再次运行会默认使用上次选的目录。
+换盘时选一个可写的子目录，例如 `D:\Apps\FirstMove`。安装完成后，开始菜单和新建的
+桌面快捷方式指向新目录，旧目录会保留。若要清理 0.3.2 或更早版本的旧安装，先卸载旧版再安装新版。
+如果任务栏还固定着旧路径的快捷方式，取消固定后重新从开始菜单固定。
 
 ## 卸载
 
@@ -83,14 +84,6 @@ python3 clients/icons/build_icons.py
 需要 Node.js 22 或更新版本和 npm。在 `clients/desktop` 执行 `npm ci`。工作台页面运行在隔离的沙盒中，用户账号沿用服务器的同源会话。要连接本地测试服务可填写 `http://127.0.0.1:8000`。
 
 - **Apple 芯片 Mac**：在 macOS 执行 `npx electron-builder --mac dmg --arm64 --publish never`。输出在仓库根目录的 `dist/desktop/`。首版使用本机 ad-hoc 签名。
-- **Windows x64**：在 Windows 执行 `npx electron-builder --win nsis --x64 --publish never`。在 Apple 芯片 Mac 交叉构建本次发布的安装程序时，先用 electron-builder 打包应用目录，再用本机架构的 NSIS 3 编译。以下命令从 `clients/desktop` 运行：
-
-```sh
-npx electron-builder --win --dir --x64 --publish never -c.directories.output=../../dist/win-release
-out="$(cd ../../dist && pwd)"
-makensis "-DAPPDIR=$out/win-release/win-unpacked" \
-  "-DICON=$out/win-release/.icon-ico/icon.ico" \
-  "-DOUTPUT=$out/FirstMove-0.1.0-windows-x64-Setup.exe" windows.nsi
-```
+- **Windows x64**：从 `clients/desktop` 执行 `npm run build:windows`。在 Windows 上使用 electron-builder 的 NSIS 工具；在 macOS 上需提前安装原生 `makensis`。安装包输出到仓库根目录的 `dist/`。GitHub Actions 的 `Check Windows installer` 会验证默认安装路径、其他盘符和快捷方式。
 
 发布时仅上传已经验证的 DMG、EXE、APK 和 SHA256SUMS.txt。签名私钥、本地数据库、账号及开发环境不在发布内容中。

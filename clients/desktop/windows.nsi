@@ -1,4 +1,5 @@
 Unicode true
+!addplugindir /x86-unicode "${NSIS_PLUGINS}"
 Name "先行 · FirstMove"
 OutFile "${OUTPUT}"
 InstallDir "$LOCALAPPDATA\Programs\Yraguo\FirstMove"
@@ -11,15 +12,18 @@ UninstallIcon "${ICON}"
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 !include "x64.nsh"
+!include "FileFunc.nsh"
 
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Yraguo.FirstMove"
-!define DEFAULT_DIR "$LOCALAPPDATA\Programs\Yraguo\FirstMove"
+!define APP_KEY "Software\Yraguo\FirstMove"
+!define APP_EXE "$INSTDIR\app\先行.exe"
+!define APP_ICON "$INSTDIR\app\FirstMove.ico"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\app\先行.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "立即打开先行"
 !define MUI_DIRECTORYPAGE_TEXT_TOP "选择安装位置。可以换到其他盘，例如 D:\Apps\FirstMove。"
-!define MUI_PAGE_CUSTOMFUNCTION_LEAVE directoryLeave
 
 !insertmacro MUI_PAGE_WELCOME
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE directoryLeave
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
@@ -37,51 +41,83 @@ Function .onInit
   ${EndIf}
 FunctionEnd
 
-Function directoryLeave
-  ; 先把目录建出来，再试写一个文件。写不进去就当场拦住，
-  ; 而不是解压到一半才失败，最后只剩一个装了一半的目录。
-  CreateDirectory "$INSTDIR"
+Function checkInstallDirectory
+  ClearErrors
+  GetFullPathName $INSTDIR "$INSTDIR"
   ${If} ${Errors}
-    MessageBox MB_ICONSTOP "无法创建目录：$\r$\n$INSTDIR$\r$\n$\r$\n换一个位置试试，不要选只读盘或没有权限的文件夹。"
-    Abort
+    Return
+  ${EndIf}
+  ${GetRoot} "$INSTDIR" $0
+  ${If} $0 == ""
+  ${OrIf} $INSTDIR == "$0"
+  ${OrIf} $INSTDIR == "$0\"
+    SetErrors
+    Return
   ${EndIf}
 
-  ClearErrors
-  FileOpen $0 "$INSTDIR\.firstmove-write-test" w
+  CreateDirectory "$INSTDIR"
   ${If} ${Errors}
-    MessageBox MB_ICONSTOP "这个目录写不进去：$\r$\n$INSTDIR$\r$\n$\r$\n可能位于受保护的位置，或者磁盘已满、被安全软件拦截。请换一个目录。"
+    Return
+  ${EndIf}
+  GetTempFileName $0 "$INSTDIR"
+  ${If} ${Errors}
+    Return
+  ${EndIf}
+  Delete "$0"
+
+  CreateDirectory "$INSTDIR\app"
+  ${If} ${Errors}
+    Return
+  ${EndIf}
+  GetTempFileName $0 "$INSTDIR\app"
+  ${IfNot} ${Errors}
+    Delete "$0"
+  ${EndIf}
+FunctionEnd
+
+Function directoryLeave
+  Call checkInstallDirectory
+  ${If} ${Errors}
+    MessageBox MB_ICONSTOP "无法写入安装目录：$\r$\n$INSTDIR$\r$\n请选择有写入权限的子文件夹，例如 D:\Apps\FirstMove。"
     Abort
   ${EndIf}
-  FileClose $0
-  Delete "$INSTDIR\.firstmove-write-test"
 FunctionEnd
 
 Section "先行运行文件（必需）" SecMain
   SectionIn RO
   SetShellVarContext current
 
+  ; 静默安装跳过目录页，也需要校验 /D 指定的目标。
+  Call checkInstallDirectory
+  ${If} ${Errors}
+    SetErrorLevel 1
+    MessageBox MB_ICONSTOP "无法写入安装目录：$\r$\n$INSTDIR" /SD IDOK
+    Abort
+  ${EndIf}
+
   ; 程序在运行时文件被占用，先请它退出；失败也无所谓，后面写入自然会报错
-  nsExec::ExecToLog 'taskkill /IM "先行.exe"'
+  nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /IM "先行.exe"'
   Pop $0
   Sleep 600
 
-  ; 换了安装位置的话，默认位置那份旧副本会留下来，装完就有两个先行
-  StrCmp $INSTDIR "${DEFAULT_DIR}" noOldCopy 0
-  IfFileExists "${DEFAULT_DIR}\app\先行.exe" 0 noOldCopy
-    MessageBox MB_YESNO|MB_ICONQUESTION "默认位置还有一份旧的安装：$\r$\n${DEFAULT_DIR}$\r$\n$\r$\n要顺手删掉吗？不删也不影响这次安装。" IDNO noOldCopy
-    RMDir /r "${DEFAULT_DIR}"
-  noOldCopy:
-
+  ClearErrors
   SetOutPath "$INSTDIR\app"
   SetOverwrite on
   File /r "${APPDIR}\*.*"
+  File /oname=FirstMove.ico "${ICON}"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-  CreateShortcut "$SMPROGRAMS\先行.lnk" "$INSTDIR\app\先行.exe"
-  CreateShortcut "$SMPROGRAMS\卸载 先行.lnk" "$INSTDIR\Uninstall.exe"
-  WriteRegStr HKCU "Software\Yraguo\FirstMove" "InstallDir" "$INSTDIR"
+  ${If} ${Errors}
+    SetErrorLevel 1
+    MessageBox MB_ICONSTOP "无法写入程序文件：$\r$\n$INSTDIR" /SD IDOK
+    Abort
+  ${EndIf}
+  CreateShortcut "$SMPROGRAMS\先行.lnk" "${APP_EXE}" "" "${APP_ICON}" 0
+  WinShell::SetLnkAUMI "$SMPROGRAMS\先行.lnk" "${APP_ID}"
+  CreateShortcut "$SMPROGRAMS\卸载 先行.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0
+  WriteRegStr HKCU "${APP_KEY}" "InstallDir" "$INSTDIR"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayName" "先行 · FirstMove"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "0.3.2"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayIcon" "$INSTDIR\app\先行.exe"
+  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "${VERSION}"
+  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayIcon" "${APP_ICON},0"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "Publisher" "Yraguo"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
@@ -91,7 +127,8 @@ SectionEnd
 
 Section "创建桌面快捷方式" SecDesktop
   SetShellVarContext current
-  CreateShortcut "$DESKTOP\先行.lnk" "$INSTDIR\app\先行.exe"
+  CreateShortcut "$DESKTOP\先行.lnk" "${APP_EXE}" "" "${APP_ICON}" 0
+  WinShell::SetLnkAUMI "$DESKTOP\先行.lnk" "${APP_ID}"
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -101,7 +138,7 @@ SectionEnd
 
 Section "Uninstall"
   SetShellVarContext current
-  nsExec::ExecToLog 'taskkill /IM "先行.exe"'
+  nsExec::ExecToLog '"$SYSDIR\taskkill.exe" /IM "先行.exe"'
   Pop $0
   Sleep 400
   ; 目录可能被改到别的盘，先确认里面确实是先行，再动手删除
@@ -109,12 +146,15 @@ Section "Uninstall"
     MessageBox MB_ICONSTOP "这个目录里没有先行程序文件，已停止卸载：$\r$\n$INSTDIR"
     Abort
   ${EndIf}
-  Delete "$SMPROGRAMS\先行.lnk"
-  Delete "$SMPROGRAMS\卸载 先行.lnk"
-  Delete "$DESKTOP\先行.lnk"
+  ReadRegStr $0 HKCU "${APP_KEY}" "InstallDir"
+  ${If} $0 == $INSTDIR
+    Delete "$SMPROGRAMS\先行.lnk"
+    Delete "$SMPROGRAMS\卸载 先行.lnk"
+    Delete "$DESKTOP\先行.lnk"
+    DeleteRegKey HKCU "${UNINSTALL_KEY}"
+    DeleteRegKey HKCU "${APP_KEY}"
+  ${EndIf}
   RMDir /r "$INSTDIR\app"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
-  DeleteRegKey HKCU "${UNINSTALL_KEY}"
-  DeleteRegKey HKCU "Software\Yraguo\FirstMove"
 SectionEnd
