@@ -8,9 +8,9 @@ root=$(cd "$(dirname "$0")/../.." && pwd)
 export PATH="${JAVA_HOME:?需要 JDK 17}/bin:$PATH"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-out="$root/dist/FirstMove-0.2.1-android.apk"
+out="$root/dist/FirstMove-0.3.0-android.apk"
 mkdir -p "$tmp/res/drawable-nodpi" "$tmp/classes" "$tmp/dex" "$root/dist"
-cp "$root/frontend/src/brand/xianxing-192.png" "$tmp/res/drawable-nodpi/icon.png"
+cp "$root/clients/icons/app-512.png" "$tmp/res/drawable-nodpi/icon.png"
 "$ANDROID_TOOLS/aapt2" compile --dir "$tmp/res" -o "$tmp/res.zip"
 "$ANDROID_TOOLS/aapt2" link -I "$ANDROID_PLATFORM/android.jar" --manifest "$root/clients/android/AndroidManifest.xml" -o "$tmp/base.apk" "$tmp/res.zip"
 javac --release 8 -encoding UTF-8 -classpath "$ANDROID_PLATFORM/android.jar" -d "$tmp/classes" "$root/clients/android/src/io/github/yraguo/firstmove/MainActivity.java"

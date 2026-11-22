@@ -50,6 +50,16 @@ export const api = {
     request(`/users/${encodeURIComponent(uid)}/quota`, { method: "PUT", json: { bytes } }).then((r) => r.data),
   storage: () => request("/me/storage").then((r) => r.data),
 
+  // Admin（仅工作台所有者）
+  adminOverview: () => request("/admin/overview").then((r) => r.data),
+  adminUsers: () => request("/admin/users").then((r) => r.data),
+  adminChangeUser: (uid, patch) =>
+    request(`/admin/users/${encodeURIComponent(uid)}`, { method: "PUT", json: patch }).then((r) => r.data),
+  adminResetPassword: (uid) =>
+    request(`/admin/users/${encodeURIComponent(uid)}/password`, { method: "POST" }).then((r) => r.data),
+  adminKickUser: (uid) =>
+    request(`/admin/users/${encodeURIComponent(uid)}/sessions`, { method: "DELETE" }).then((r) => r.data),
+
   // Sync, Search & Calendar
   sync: (etag) => request("/sync", { headers: etag ? { "If-None-Match": etag } : {} }),
   search: (q) => request(`/search?q=${encodeURIComponent(q)}`).then((r) => r.data),

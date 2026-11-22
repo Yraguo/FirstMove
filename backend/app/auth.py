@@ -59,7 +59,7 @@ def login(data: Credentials, db: DB, response: Response):
     limit = db.execute("SELECT * FROM login_limits WHERE name=?", (name,)).fetchone()
     if limit and limit["since"] > stamp()-300 and limit["misses"] >= 10:
         fail(429, "稍后再试")
-    row = db.execute("SELECT id,password FROM users WHERE name=?",(data.name,)).fetchone()
+    row = db.execute("SELECT id,password,disabled FROM users WHERE name=?",(data.name,)).fetchone()
     encoded = row["password"] if row else "00"*16 + ":" + "00"*64
     valid = hmac.compare_digest(password_hash(data.password, encoded.split(":")[0]), encoded)
     if not valid or not row:
@@ -68,6 +68,8 @@ def login(data: Credentials, db: DB, response: Response):
                       DO UPDATE SET misses=misses+1""",(name,stamp()))
         db.commit()
         fail(401, "账号或密码错误")
+    if row["disabled"]:
+        fail(403, "账号已被停用，请联系工作台所有者")
     db.execute("DELETE FROM login_limits WHERE name=?",(name,))
     return issue(db,row["id"],response)
 

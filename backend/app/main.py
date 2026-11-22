@@ -12,7 +12,7 @@ from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import auth, core, files, projects, records, schedule
+from . import admin, auth, core, files, projects, records, schedule
 from .core import DB, Day, User, fail
 
 
@@ -91,7 +91,7 @@ async def integrity_error(request,exc):
     return JSONResponse({"detail":"数据冲突，请刷新后重试"},status_code=409)
 
 
-for router in (auth.router,schedule.router,projects.router,records.router,files.router):
+for router in (admin.router,auth.router,schedule.router,projects.router,records.router,files.router):
     app.include_router(router,prefix="/api")
 
 

@@ -87,8 +87,18 @@ def initialize():
         db.execute("PRAGMA auto_vacuum=FULL")
         db.execute("PRAGMA journal_mode=WAL")
         db.executescript(Path(__file__).with_name("schema.sql").read_text())
+        migrate(db)
     finally:
         db.close()
+
+
+def migrate(db):
+    """给已有的库补列，重复执行不会报错。"""
+    for ddl in ("ALTER TABLE users ADD COLUMN disabled INTEGER NOT NULL DEFAULT 0",):
+        try:
+            db.execute(ddl)
+        except sqlite3.OperationalError:
+            pass
 
 
 def database(request: Request):
@@ -130,6 +140,8 @@ def user(db: DB, workspace_session: Annotated[str | None, Cookie()] = None):
                         WHERE s.token=? AND s.expires>?""", (token, stamp())).fetchone()
     if row is None:
         fail(401, "请登录")
+    if row["disabled"]:
+        fail(403, "账号已被停用，请联系工作台所有者")
     return dict(row)
 
 

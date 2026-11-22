@@ -19,7 +19,7 @@ bash clients/android/build.sh
 unset FIRSTMOVE_STORE_PASS
 ```
 
-输出为 `dist/FirstMove-0.2.1-android.apk`。构建会执行 APK 签名验证。应用 ID 为 `io.github.yraguo.firstmove`，最低 Android 7.0，当前 versionCode 为 3。首版发布证书的 SHA-256 指纹为 `ae1b2eef27625cdb4020e61af962b704429719bc1dd2a9a3bd1a1fb98c795206`。
+输出为 `dist/FirstMove-0.3.0-android.apk`。构建会执行 APK 签名验证。应用 ID 为 `io.github.yraguo.firstmove`，最低 Android 7.0，当前 versionCode 为 4。首版发布证书的 SHA-256 指纹为 `ae1b2eef27625cdb4020e61af962b704429719bc1dd2a9a3bd1a1fb98c795206`。
 
 应用内是 WebView 外壳，不调用系统浏览器：同源页面在应用内打开，外站链接交给系统浏览器；返回键先回退页面，到底后退到后台；地址只保存一次。外壳通过 `window.FirstMove` 向页面提供三个能力，网页版与桌面端没有这个对象，相关分支会自动跳过：
 
@@ -31,6 +31,36 @@ unset FIRSTMOVE_STORE_PASS
 | 文件选择 | 标准 `<input type="file">` | 由 `onShowFileChooser` 承接，附件上传可用 |
 
 应用内地址只保存一次，连不上时出现「重试」和「更换服务器地址」两个按钮，是换服务器的唯一入口。首次进入页面会申请通知权限。
+
+## 安装包图标
+
+图标源文件是 `clients/icons/source.png`（整张铺满酒红，没有白底）。运行
+
+```sh
+python3 clients/icons/build_icons.py
+```
+
+会按平台规范重新生成三个文件，圆角外面是透明而不是白色，所以在深色桌面、
+安装界面和任务栏上都不会露出白边：
+
+| 产物 | 用途 |
+| --- | --- |
+| `clients/desktop/icon.png` | macOS，1024 画布、内容 824、圆角 185（Apple 网格） |
+| `clients/desktop/icon-win.png` | Windows，1024 画布、内容 944、圆角 177 |
+| `clients/icons/app-512.png` | Android 启动图标，512、圆角 113 |
+
+换图标时只替换 `source.png` 再跑一次脚本，不要直接改生成的 PNG。
+
+## Windows 安装程序
+
+`clients/desktop/windows.nsi` 提供四个页面：欢迎、**选择安装位置**、**选择组件**
+（可勾选是否创建桌面快捷方式）、安装。默认目录是
+`%LOCALAPPDATA%\Programs\Yraguo\FirstMove`，可以改到其他盘，例如
+`D:\Apps\FirstMove`，目标目录需要当前用户有写入权限。
+
+安装程序以当前用户身份运行（不弹 UAC），卸载信息同样记在当前用户下。装过一次后
+再次运行会沿用上次选择的目录。卸载前会检查目标目录里确实有 `app\先行.exe`，
+避免目录被改到别处后误删。
 
 ## 桌面端
 

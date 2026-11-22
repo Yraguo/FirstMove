@@ -10,6 +10,7 @@ import {
   syncNow
 } from "./store.js";
 import { esc, showToast } from "./utils.js";
+import { renderAdmin } from "./views/admin.js";
 import { renderAgenda } from "./views/agenda.js";
 import { renderAuth } from "./views/auth.js";
 import { renderMe } from "./views/me.js";
@@ -36,6 +37,9 @@ function render() {
     { id: "projects", label: "项目", icon: icons.folder, badge: "" },
     { id: "me", label: "我的", icon: icons.user, badge: state.outbox.length ? `${state.outbox.length}待同步` : "" }
   ];
+  if (state.user.admin) {
+    navItems.push({ id: "admin", label: "管理", icon: icons.shield, badge: "" });
+  }
 
   const recentProjects = state.projects.filter(p => !p.hidden && !p.trashed && !p.archived).slice(0, 5);
   const statusPill = !state.online
@@ -93,7 +97,7 @@ function render() {
 
     <main class="main" id="main-content"></main>
 
-    <nav class="mobile-nav" aria-label="底部导航">
+    <nav class="mobile-nav" aria-label="底部导航" style="grid-template-columns:repeat(${navItems.length},minmax(0,1fr))">
       ${navItems
         .map(
           (item) => `
@@ -118,6 +122,8 @@ function render() {
     renderProjects(mainEl);
   } else if (state.tab === "me") {
     renderMe(mainEl);
+  } else if (state.tab === "admin") {
+    renderAdmin(mainEl);
   }
 }
 
