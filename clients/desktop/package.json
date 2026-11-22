@@ -1,7 +1,7 @@
 {
   "name": "firstmove",
   "productName": "先行",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "FirstMove self-hosted workspace client",
   "author": "Yraguo",
