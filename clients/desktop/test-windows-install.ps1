@@ -7,7 +7,9 @@ $default = Join-Path $env:LOCALAPPDATA 'Programs\Yraguo\FirstMove'
 $iconSource = Join-Path $repo 'dist/win-release/.icon-ico/icon.ico'
 
 function Install-FirstMove([string]$Arguments) {
-    (Start-Process -FilePath $installer -ArgumentList $Arguments -PassThru -Wait).ExitCode
+    $result = Start-Process -FilePath $installer -ArgumentList $Arguments -PassThru -Wait
+    Write-Host "Setup $Arguments returned $($result.ExitCode)"
+    $result.ExitCode
 }
 
 function Assert-FirstMoveInstallation([string]$Directory) {
@@ -26,8 +28,8 @@ function Assert-FirstMoveInstallation([string]$Directory) {
         $link = Join-Path ([Environment]::GetFolderPath($folder)) '先行.lnk'
         if (!(Test-Path -LiteralPath $link -PathType Leaf)) { throw "Missing shortcut $link" }
         $shortcut = $shell.CreateShortcut($link)
-        if ($shortcut.TargetPath -ne $exe -or $shortcut.IconLocation -ne "$icon,0") {
-            throw "Incorrect shortcut target or icon at $link"
+        if ($shortcut.TargetPath -ne $exe -or ($shortcut.IconLocation -replace ',\s*0$', ',0') -ne "$icon,0") {
+            throw "Incorrect shortcut $link. Target: $($shortcut.TargetPath), icon: $($shortcut.IconLocation)"
         }
     }
     Write-Host "Verified installation and icons at $Directory"
@@ -37,21 +39,25 @@ if (Test-Path -LiteralPath $registry) { throw 'Run on a clean Windows test accou
 if ((Install-FirstMove '/S') -ne 0) { throw 'Default installation failed.' }
 Assert-FirstMoveInstallation $default
 
-$otherRoot = New-Item -Type Directory -Path (Join-Path $env:RUNNER_TEMP 'firstmove-other-drive')
-$drive = 90..68 | ForEach-Object { "$([char]$_):" } | Where-Object { !(Test-Path "$_\") } | Select-Object -First 1
-if (!$drive) { throw 'No free drive letter for the test.' }
-& subst.exe $drive $otherRoot.FullName
-if ($LASTEXITCODE -ne 0) { throw 'Could not create the temporary test drive.' }
+$testRoot = Join-Path $env:RUNNER_TEMP 'firstmove-other-drive'
+New-Item -Type Directory -Path $testRoot | Out-Null
+if ((Split-Path $testRoot -Qualifier) -eq (Split-Path $default -Qualifier)) {
+    $drive = 90..68 | ForEach-Object { "$([char]$_):" } | Where-Object { !(Test-Path "$_\") } | Select-Object -First 1
+    if (!$drive) { throw 'No free drive letter for the test.' }
+    & subst.exe $drive $testRoot
+    if ($LASTEXITCODE -ne 0) { throw 'Could not create the temporary test drive.' }
+    $testRoot = "$drive\"
+}
 try {
-    $custom = Join-Path "$drive\" '应用 Folder\FirstMove'
+    $custom = Join-Path $testRoot '应用 Folder\FirstMove'
     if ((Install-FirstMove "/S /D=$custom") -ne 0) { throw 'Installation on the alternate drive failed.' }
     Assert-FirstMoveInstallation $custom
     if (!(Test-Path -LiteralPath (Join-Path $default 'app\先行.exe'))) { throw 'The old install was removed.' }
 
-    $blocked = New-Item -Type Directory -Path (Join-Path "$drive\" 'blocked')
+    $blocked = New-Item -Type Directory -Path (Join-Path $testRoot 'blocked')
     New-Item -Type File -Path (Join-Path $blocked.FullName 'app') | Out-Null
     if ((Install-FirstMove "/S /D=$($blocked.FullName)") -eq 0) { throw 'Installer accepted an invalid app directory.' }
     Assert-FirstMoveInstallation $custom
 } finally {
-    & subst.exe $drive /d
+    if ($drive) { & subst.exe $drive /d }
 }

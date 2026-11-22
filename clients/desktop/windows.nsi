@@ -34,6 +34,8 @@ UninstallIcon "${ICON}"
 !insertmacro MUI_LANGUAGE "SimpChinese"
 !insertmacro MUI_LANGUAGE "English"
 
+Var DirectoryError
+
 Function .onInit
   ${IfNot} ${RunningX64}
     MessageBox MB_ICONSTOP "FirstMove requires 64-bit Windows."
@@ -42,11 +44,17 @@ Function .onInit
 FunctionEnd
 
 Function checkInstallDirectory
+  StrCpy $DirectoryError "安装路径无效"
   ClearErrors
-  GetFullPathName $INSTDIR "$INSTDIR"
-  ${If} ${Errors}
+  ; NSIS GetFullPathName 会拒绝某些尚未创建的路径。
+  StrCpy $0 "$INSTDIR"
+  System::Call 'kernel32::GetFullPathNameW(w r0, i ${NSIS_MAX_STRLEN}, w .r0, p 0) i .r1'
+  ${If} $1 == 0
+  ${OrIf} $1 >= ${NSIS_MAX_STRLEN}
+    SetErrors
     Return
   ${EndIf}
+  StrCpy $INSTDIR "$0"
   ${GetRoot} "$INSTDIR" $0
   ${If} $0 == ""
   ${OrIf} $INSTDIR == "$0"
@@ -55,6 +63,8 @@ Function checkInstallDirectory
     Return
   ${EndIf}
 
+  StrCpy $DirectoryError "无法写入安装目录"
+  ClearErrors
   CreateDirectory "$INSTDIR"
   ${If} ${Errors}
     Return
@@ -65,6 +75,7 @@ Function checkInstallDirectory
   ${EndIf}
   Delete "$0"
 
+  StrCpy $DirectoryError "无法写入程序子目录"
   CreateDirectory "$INSTDIR\app"
   ${If} ${Errors}
     Return
@@ -78,7 +89,7 @@ FunctionEnd
 Function directoryLeave
   Call checkInstallDirectory
   ${If} ${Errors}
-    MessageBox MB_ICONSTOP "无法写入安装目录：$\r$\n$INSTDIR$\r$\n请选择有写入权限的子文件夹，例如 D:\Apps\FirstMove。"
+    MessageBox MB_ICONSTOP "$DirectoryError：$\r$\n$INSTDIR$\r$\n请选择有写入权限的子文件夹，例如 D:\Apps\FirstMove。"
     Abort
   ${EndIf}
 FunctionEnd
@@ -91,7 +102,7 @@ Section "先行运行文件（必需）" SecMain
   Call checkInstallDirectory
   ${If} ${Errors}
     SetErrorLevel 1
-    MessageBox MB_ICONSTOP "无法写入安装目录：$\r$\n$INSTDIR" /SD IDOK
+    MessageBox MB_ICONSTOP "$DirectoryError：$\r$\n$INSTDIR" /SD IDOK
     Abort
   ${EndIf}
 
