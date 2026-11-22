@@ -51,9 +51,10 @@ Section "先行运行文件（必需）" SecMain
   File /r "${APPDIR}\*.*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateShortcut "$SMPROGRAMS\先行.lnk" "$INSTDIR\app\先行.exe"
+  CreateShortcut "$SMPROGRAMS\卸载 先行.lnk" "$INSTDIR\Uninstall.exe"
   WriteRegStr HKCU "Software\Yraguo\FirstMove" "InstallDir" "$INSTDIR"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayName" "先行 · FirstMove"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "0.3.0"
+  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "0.3.1"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayIcon" "$INSTDIR\app\先行.exe"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "Publisher" "Yraguo"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
@@ -79,6 +80,7 @@ Section "Uninstall"
     Abort
   ${EndIf}
   Delete "$SMPROGRAMS\先行.lnk"
+  Delete "$SMPROGRAMS\卸载 先行.lnk"
   Delete "$DESKTOP\先行.lnk"
   RMDir /r "$INSTDIR\app"
   Delete "$INSTDIR\Uninstall.exe"

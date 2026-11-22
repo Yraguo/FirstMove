@@ -19,7 +19,7 @@ bash clients/android/build.sh
 unset FIRSTMOVE_STORE_PASS
 ```
 
-输出为 `dist/FirstMove-0.3.0-android.apk`。构建会执行 APK 签名验证。应用 ID 为 `io.github.yraguo.firstmove`，最低 Android 7.0，当前 versionCode 为 4。首版发布证书的 SHA-256 指纹为 `ae1b2eef27625cdb4020e61af962b704429719bc1dd2a9a3bd1a1fb98c795206`。
+输出为 `dist/FirstMove-0.3.1-android.apk`。构建会执行 APK 签名验证。应用 ID 为 `io.github.yraguo.firstmove`，最低 Android 7.0，当前 versionCode 为 5。首版发布证书的 SHA-256 指纹为 `ae1b2eef27625cdb4020e61af962b704429719bc1dd2a9a3bd1a1fb98c795206`。
 
 应用内是 WebView 外壳，不调用系统浏览器：同源页面在应用内打开，外站链接交给系统浏览器；返回键先回退页面，到底后退到后台；地址只保存一次。外壳通过 `window.FirstMove` 向页面提供三个能力，网页版与桌面端没有这个对象，相关分支会自动跳过：
 
@@ -61,6 +61,22 @@ python3 clients/icons/build_icons.py
 安装程序以当前用户身份运行（不弹 UAC），卸载信息同样记在当前用户下。装过一次后
 再次运行会沿用上次选择的目录。卸载前会检查目标目录里确实有 `app\先行.exe`，
 避免目录被改到别处后误删。
+
+## 卸载
+
+**Windows**：安装时已写入卸载信息，在「设置 → 应用」里搜「先行」即可卸载；开始菜单里也放了
+「卸载 先行」快捷方式，指向安装目录下的 `Uninstall.exe`。卸载会删掉程序文件、开始菜单与桌面
+快捷方式，`%APPDATA%` 下的登录状态会保留，重新安装后按需登录。
+
+**macOS**：DMG 里除了「先行」还有一个「卸载 先行.command」。双击后它会先列出将要删除的内容
+并要求确认，再退出应用、删除 `/Applications/先行.app` 与
+`~/Library/Application Support/先行` 等本机数据。从网上下载的文件带隔离标记，首次双击可能
+提示「无法验证开发者」，右键 →「打开」即可；也可以在终端里执行
+`bash "/Volumes/先行 0.3.1-arm64/卸载 先行.command"`。
+
+**Android**：按系统常规方式卸载。应用数据随应用一起删除。
+
+三端卸载都不会影响服务器上的账号、待办、记录和附件，重新安装并登录后仍在。
 
 ## 桌面端
 

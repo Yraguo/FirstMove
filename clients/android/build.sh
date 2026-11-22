@@ -8,7 +8,7 @@ root=$(cd "$(dirname "$0")/../.." && pwd)
 export PATH="${JAVA_HOME:?需要 JDK 17}/bin:$PATH"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-out="$root/dist/FirstMove-0.3.0-android.apk"
+out="$root/dist/FirstMove-0.3.1-android.apk"
 mkdir -p "$tmp/res/drawable-nodpi" "$tmp/classes" "$tmp/dex" "$root/dist"
 cp "$root/clients/icons/app-512.png" "$tmp/res/drawable-nodpi/icon.png"
 "$ANDROID_TOOLS/aapt2" compile --dir "$tmp/res" -o "$tmp/res.zip"
